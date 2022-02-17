@@ -2,6 +2,9 @@ import unittest
 from acoustics.decibels import add_decibels
 import numpy as np
 
+# To run these tests, make sure that you're in the top of the "acoustics" package and run:
+# "python -m unittest -v tests/test_decibels_unittest.py"
+
 class TestAddDecibels(unittest.TestCase):
     def test_add_decibels_normal(self):
         value = add_decibels(np.array([1,1]))
