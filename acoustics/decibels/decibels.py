@@ -10,3 +10,12 @@ def add_decibels(dB,coherent = False):
         summation = 10 * np.log10(sum(10**(dB/10)))
 
     return summation
+
+def unpack_decibels(dB,reference,squared = True):
+
+    if squared:
+        value = reference * 10**(dB/20)
+    else:
+        value = reference * 10**(dB/10)
+
+    return value
