@@ -9,6 +9,8 @@ def get_fft(waveform,fs,sides = "single"):
     # https://pythonnumericalmethods.berkeley.edu/notebooks/chapter24.04-FFT-in-Python.html
     # Retrieved Feb. 17, 2022
 
+    waveform = np.asarray(waveform)
+
     # Take the fft
     X = fft(waveform)
     N = len(X)

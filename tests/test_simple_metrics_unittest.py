@@ -23,5 +23,4 @@ class TestGetOASPL(unittest.TestCase):
         self.assertAlmostEqual(value,expected,decimalPlaces,message,delta)
 
 if __name__ == "__main__":
-    test_simple_metrics()
-    print("Everything Passed")
+    print("Metrics Passed")
