@@ -13,7 +13,7 @@ setup(
         author_email="anderson.mark.az@gmail.com",
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
-        packages=find_packages(where = "src"),
+        packages=find_packages(exclude=['tests']),
         install_requiree=[], # add any additional packages that 
         # needs to be installed along with your package. Eg: 'caer'
         
