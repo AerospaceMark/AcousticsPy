@@ -2,6 +2,19 @@
 
 import numpy as np
 
+"""
+summation = add_decibels(dB, coherent = False)
+
+Take multiple decibel values and add them together. Incoherence is assumed but can be switched to coherence.
+
+Input:
+    dB = list or numpy array of decibel values
+    coherent = boolean, whether the decibel values are coherent with each other
+
+Output:
+    summation = the sum total of the decibel values in the input
+"""
+
 def add_decibels(dB,coherent = False):
    
     dB = np.asarray(dB)
