@@ -1,5 +1,5 @@
 import unittest
-from acoustics.metrics import get_oaspl
+from acousticspy.metrics import get_oaspl
 
 import numpy as np
 

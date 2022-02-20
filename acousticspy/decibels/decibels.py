@@ -11,7 +11,7 @@ def add_decibels(dB,coherent = False):
 
     return summation
 
-def unpack_decibels(dB,reference,squared = True):
+def dB_to_pressure(dB,reference,squared = True):
 
     if squared:
         value = reference * 10**(dB/20)

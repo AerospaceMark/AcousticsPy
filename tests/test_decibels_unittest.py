@@ -1,6 +1,6 @@
 import unittest
-from acoustics.decibels import add_decibels
-from acoustics.decibels import unpack_decibels
+from acousticspy.decibels import add_decibels
+from acousticspy.decibels import dB_to_pressure
 import numpy as np
 
 # To run these tests, make sure that you're in the top of the "acoustics" package and run:
@@ -36,22 +36,22 @@ class TestAddDecibels(unittest.TestCase):
         delta = None # Could also say: delta = 1e-12. Must specify decimalPlaces or delta, but not both
         self.assertAlmostEqual(value,expected,decimalPlaces,message,delta)
 
-class TestUnpackDecibels(unittest.TestCase):
+class TestDBToPressure(unittest.TestCase):
     
     #---------------------------------------
-    # Testing the unpack_decibels() function
+    # Testing the dB_to_pressure() function
     #---------------------------------------
 
-    def test_unpack_decibels_normal(self):
-        value = unpack_decibels(94,20e-6)
+    def test_dB_to_pressure(self):
+        value = dB_to_pressure(94,20e-6)
         expected = 1.0023744672545452
         decimalPlaces = 12
         message = "Results are not equal within 12 digits"
         delta = None
         self.assertAlmostEqual(value,expected,decimalPlaces,message,delta)
 
-    def test_unpack_decibels_0_dB(self):
-        value = unpack_decibels(0,1)
+    def test_dB_to_pressure_0_dB(self):
+        value = dB_to_pressure(0,1)
         expected = 1.0
         decimalPlaces = 12
         message = "Results are note equal within 12 digits"
