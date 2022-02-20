@@ -1,10 +1,17 @@
-# acoustics
+# AcousticsPy
 
-## To Run
+Welcome to the README file for `AcousticsPy`! This Python package contains many useful calculations for general acoustics use.
 
-Enter the python environment and type:
+## Install
+
+Installation is easy with `pip`:
 
 ```
->> import sys; sys.path.append("path-to-acoustics-folder-on-computer")
->> import acoustics
+$ pip install acousticspy
+```
+
+## Import
+
+```
+>> import acousticspy as ap
 ```
