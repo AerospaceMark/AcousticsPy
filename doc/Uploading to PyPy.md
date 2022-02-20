@@ -5,11 +5,11 @@ This file contains information on how to build the project and upload a new vers
 Next, type this command from inside the top folder of `AcousticsPy`:
 
 ```
-python setup.py sdist bdist_wheel
+$ python setup.py sdist bdist_wheel
 ```
 
 This build the project. To upload it to PyPi, type:
 
 ```
-python -m twine upload dist/*
+$ python -m twine upload dist/*
 ```
