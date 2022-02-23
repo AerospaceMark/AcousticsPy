@@ -16,6 +16,12 @@ def get_fft(waveform,fs,sides = "single"):
     N = len(X)
     frequencies = np.linspace(0,1,N) * fs
 
-    X = X/(fs/2)
+    X = X / len(waveform)
+
+    # If computing a single-sided spectrum
+    if sides == "single":
+        X = 2*X[0:int(fs/2)]
+        frequencies = frequencies[0:int(fs/2)]
+        
 
     return X, frequencies
