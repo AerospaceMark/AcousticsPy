@@ -8,6 +8,7 @@ import scipy.special as sp
 Creating an entire pressure field based on the locations of various sources
 """
 def pressure_field(positions,frequencies,
+               time = 0.0,
                areas = [0.001],
                strengths = [0.01],
                phases = [0],
@@ -35,6 +36,8 @@ def pressure_field(positions,frequencies,
         
     if len(phases) == 1:
         phases = np.ones(num_sources) * phases
+
+    time = complex(time)
     
     numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
     numPoints_y = int(np.floor((y_range[1] - y_range[0]) * point_density))
@@ -49,25 +52,25 @@ def pressure_field(positions,frequencies,
     if method == "Rayleigh":
         
         if not directivity_only:
-            pressure_field = rayleigh(positions,areas,strengths,phases,field_points,frequencies)
+            pressure_field = rayleigh(positions,areas,strengths,phases,field_points,frequencies,time)
             pressure_field = pressure_field.reshape(-1,numPoints_x) # It's the number of points in the x-direction that you use here
         
         # Getting the directivity at a given distance. Default is 1000 meters away
         num_directivity_points = 1000
         directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
-        directivity = np.abs(rayleigh(positions,areas,strengths,phases,directivity_points,frequencies))
+        directivity = np.abs(rayleigh(positions,areas,strengths,phases,directivity_points,frequencies,time))
         directivity = directivity / np.max(directivity)
     
     elif method == "Free Space":
         
         if not directivity_only:
-            pressure_field = monopole_field(positions,frequencies,strengths,phases,field_points)
+            pressure_field = monopole_field(positions,frequencies,strengths,phases,field_points,time)
             pressure_field = pressure_field.reshape(-1,numPoints_x)
         
         # Getting the directivity at a given distance. Default is 1000 meters away
         num_directivity_points = 10000
         directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
-        directivity = np.abs(rayleigh(positions,areas,strengths,phases,directivity_points,frequencies))
+        directivity = np.abs(monopole_field(positions,frequencies,strengths,phases,directivity_points,time))
         directivity = directivity / np.max(directivity)
     
     # Only show plots if you calculated the entirie pressure field
@@ -141,7 +144,7 @@ def pressure_field(positions,frequencies,
 Creating a field from a monopole
 """
 
-def monopole_field(positions,frequencies,strengths,phases,field_points):
+def monopole_field(positions,frequencies,strengths,phases,field_points,time):
     
     # Convert everything to a numpy array
     positions = np.asarray(positions)
@@ -180,7 +183,7 @@ def monopole_field(positions,frequencies,strengths,phases,field_points):
             
             # get contribution to a theta location from an individual source
             A = 1j*rho_0*c*k/(4*np.pi) * current_source_strength
-            current_source_impact = A * np.exp(-1j*k*distance)/distance * np.exp(1j * current_source_phase)
+            current_source_impact = A * np.exp(-1j*k*distance)/distance * np.exp(1j * current_source_phase) * np.exp(1j*omega*time)
             
             responses[i] = responses[i] + current_source_impact
             
@@ -190,7 +193,7 @@ def monopole_field(positions,frequencies,strengths,phases,field_points):
 Perform Rayleigh Integration
 """
 
-def rayleigh(positions,areas,strengths,phases,field_points,frequencies):
+def rayleigh(positions,areas,strengths,phases,field_points,frequencies,time):
     
     # Convert everything to a numpy array
     positions = np.asarray(positions)
@@ -236,7 +239,7 @@ def rayleigh(positions,areas,strengths,phases,field_points,frequencies):
             current_source_impact = (1j * omega * rho_0 / (2 * np.pi) * 
                                     current_source_velocity * 
                                     np.exp(-1j * k * distance)/distance * 
-                                    np.exp(1j*current_source_phase) * 
+                                    np.exp(1j*current_source_phase) * np.exp(1j*omega*time) * 
                                     current_source_area)
             
             responses[i] = responses[i] + current_source_impact
