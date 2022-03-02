@@ -82,7 +82,7 @@ def pressure_field(positions,frequencies,
 
         # Plotting the real part
         c = ax[0,0].pcolormesh(X,Y,np.real(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
-        ax[0,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "none",linewidth = 3.0)
+        ax[0,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax[0,0].set_aspect('equal')
         ax[0,0].set_title("Real Part")
         ax[0,0].set_xlabel("X (m)")
@@ -91,7 +91,7 @@ def pressure_field(positions,frequencies,
 
         # Plotting the imaginary part
         c = ax[1,0].pcolormesh(X,Y,np.imag(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
-        ax[1,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "none",linewidth = 3.0)
+        ax[1,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax[1,0].set_aspect('equal')
         ax[1,0].set_title("Imaginary Part")
         ax[1,0].set_xlabel("X (m)")
@@ -100,7 +100,7 @@ def pressure_field(positions,frequencies,
 
         # Plotting the magnitude
         c = ax[0,1].pcolormesh(X,Y,np.abs(pressure_field),shading = "gouraud",cmap = "jet",vmin = 0,vmax = color_limits[1])
-        ax[0,1].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "none",linewidth = 3.0)
+        ax[0,1].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax[0,1].set_aspect('equal')
         ax[0,1].set_title("Pressure Magnitude")
         ax[0,1].set_xlabel("X (m)")
