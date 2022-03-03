@@ -10,6 +10,7 @@ Creating an entire pressure field based on the locations of various sources
 def pressure_field(positions,frequencies,
                time = 0.0,
                areas = [0.001],
+               velocities = [0.01],
                strengths = [0.01],
                phases = [0],
                x_range = [-1,1],
@@ -53,13 +54,13 @@ def pressure_field(positions,frequencies,
     if method == "Rayleigh":
         
         if not directivity_only:
-            pressure_field = rayleigh(positions,areas,strengths,phases,field_points,frequencies,time)
+            pressure_field = rayleigh(positions,areas,velocities,phases,field_points,frequencies,time)
             pressure_field = pressure_field.reshape(-1,numPoints_x) # It's the number of points in the x-direction that you use here
         
         # Getting the directivity at a given distance. Default is 1000 meters away
         num_directivity_points = 1000
         directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
-        directivity = np.abs(rayleigh(positions,areas,strengths,phases,directivity_points,frequencies,time))
+        directivity = np.abs(rayleigh(positions,areas,velocities,phases,directivity_points,frequencies,time))
         directivity = directivity / np.max(directivity)
     
     elif method == "Free Space":
@@ -197,13 +198,13 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
 Perform Rayleigh Integration
 """
 
-def rayleigh(positions,areas,strengths,phases,field_points,frequencies,time):
+def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
     
     # Convert everything to a numpy array
     positions = np.asarray(positions)
     areas = np.asarray(areas)
-    strengths = np.asarray(strengths)
-    phases = np.asarray(phases) 
+    velocities = np.asarray(velocities)
+    phases = np.asarray(phases)
     field_points = np.asarray(field_points)
     
     # Initialize the responses
@@ -219,18 +220,14 @@ def rayleigh(positions,areas,strengths,phases,field_points,frequencies,time):
         current_field_point = field_points[i,:]
         
         # Loop over all sources for a particular theta
-        for j in range(len(strengths)):
+        for j in range(len(velocities)):
             
             # Define the current source
             current_source_location = positions[j,:]
-            current_source_strength = strengths[j]
+            current_source_velocity = velocities[j]
             current_source_phase = phases[j]
             current_source_area = areas[j]
             current_source_frequency = frequencies[j]
-            
-            # Defining the velocity
-            # FIXME: Should I use the source area or source length in two dimensions?
-            current_source_velocity = current_source_strength / current_source_area
             
             # Define frequency-dependent quantities
             omega = 2 * np.pi * current_source_frequency # angular frequency
