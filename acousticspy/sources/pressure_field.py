@@ -39,6 +39,9 @@ def pressure_field(positions,frequencies,
     if len(phases) == 1:
         phases = np.ones(num_sources) * phases
 
+    if len(velocities) == 1:
+        velocities = np.ones(num_sources) * velocities
+
     time = complex(time)
     
     numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
@@ -111,9 +114,11 @@ def pressure_field(positions,frequencies,
         # Plotting the directivity
         ax[1,1].axis("off")
         ax = fig.add_subplot(224,projection = 'polar')
-        c = ax.plot(theta,directivity)
+        c = ax.plot(theta,10*np.log10(directivity))
+        ax.set_rmin(-20)
+        ax.set_rticks([0,-5,-10,-15,-20])
         ax.set_aspect('equal')
-        ax.set_title(str("Directivity at {0} m".format(directivity_distance)))
+        ax.set_title(str("Directivity (dB) at {0} m".format(directivity_distance)))
 
         fig.show()
 
