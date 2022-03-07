@@ -15,9 +15,11 @@ def pressure_field(positions,frequencies,
                phases = [0],
                x_range = [-1,1],
                y_range = [-1,1],
+               z_range = [-1,1],
                point_density = 100,
                directivity_distance = 1000,
                method = "Free Space",
+               dimensions = 2,
                directivity_only = False,
                directivity_plot_alone = False,
                show_plots = False,
@@ -43,16 +45,31 @@ def pressure_field(positions,frequencies,
         velocities = np.ones(num_sources) * velocities
 
     time = complex(time)
-    
-    numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
-    numPoints_y = int(np.floor((y_range[1] - y_range[0]) * point_density))
-    x = np.linspace(x_range[0],x_range[1],numPoints_x)
-    y = np.linspace(y_range[0],y_range[1],numPoints_y)
 
-    grid = np.meshgrid(x,y)
-    field_points = np.append(grid[0].reshape(-1,1),grid[1].reshape(-1,1),axis=1)
-    X = grid[0]
-    Y = grid[1]
+    if dimensions == 2:
+        numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
+        numPoints_y = int(np.floor((y_range[1] - y_range[0]) * point_density))
+        x = np.linspace(x_range[0],x_range[1],numPoints_x)
+        y = np.linspace(y_range[0],y_range[1],numPoints_y)
+
+        grid = np.meshgrid(x,y)
+        field_points = np.append(grid[0].reshape(-1,1),grid[1].reshape(-1,1),axis=1)
+        X = grid[0]
+        Y = grid[1]
+
+    elif dimensions == 3:
+        numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
+        numPoints_y = int(np.floor((y_range[1] - y_range[0]) * point_density))
+        numPoints_z = int(np.floor((z_range[1] - z_range[0]) * point_density))
+        x = np.linspace(x_range[0],x_range[1],numPoints_x)
+        y = np.linspace(y_range[0],y_range[1],numPoints_y)
+        z = np.linspace(z_range[0],z_range[1],numPoints_z)
+
+        grid = np.meshgrid(x,y,z)
+        field_points = np.append(grid[0].reshape(-1,1),np.append(grid[1].reshape(-1,1),grid[2].reshape(-1,1),axis = 1),axis=1)
+        X = grid[0]
+        Y = grid[1]
+        Z = grid[2]
     
     if method == "Rayleigh":
         
@@ -79,6 +96,21 @@ def pressure_field(positions,frequencies,
         directivity = directivity / np.max(directivity)
     
     # Only show plots if you calculated the entirie pressure field
+    if dimensions == 2:
+        plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits)
+
+    if dimensions == 3:
+        plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits)
+    
+        
+        
+    if directivity_only:
+        return directivity, theta
+    else:
+        return pressure_field, directivity, theta
+
+def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits):
+
     if show_plots and not directivity_only:
         # Defining the figure
         fig, ax = plt.subplots(2,2)
@@ -143,12 +175,73 @@ def pressure_field(positions,frequencies,
         fig.tight_layout()
         fig.set_size_inches(8,8)
         fig.show()
+
+def plot_3D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits):
+
+    if show_plots and not directivity_only:
+        # Defining the figure
+        fig, ax = plt.subplots(2,2)
+        fig.set_size_inches(8,8)
+
+        # Plotting the real part
+        c = ax[0,0].pcolormesh(X,Y,np.real(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
+        ax[0,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax[0,0].set_aspect('equal')
+        ax[0,0].set_title("Real Part")
+        ax[0,0].set_xlabel("X (m)")
+        ax[0,0].set_ylabel("Y (m)")
+        fig.colorbar(c,ax = ax[0,0],fraction=0.046, pad=0.04)
+
+        # Plotting the imaginary part
+        c = ax[1,0].pcolormesh(X,Y,np.imag(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
+        ax[1,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax[1,0].set_aspect('equal')
+        ax[1,0].set_title("Imaginary Part")
+        ax[1,0].set_xlabel("X (m)")
+        ax[1,0].set_ylabel("Y (m)")
+        fig.colorbar(c,ax = ax[1,0],fraction=0.046, pad=0.04)
+
+        # Plotting the magnitude
+        c = ax[0,1].pcolormesh(X,Y,np.abs(pressure_field),shading = "gouraud",cmap = "jet",vmin = 0,vmax = color_limits[1])
+        ax[0,1].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax[0,1].set_aspect('equal')
+        ax[0,1].set_title("Pressure Magnitude")
+        ax[0,1].set_xlabel("X (m)")
+        ax[0,1].set_ylabel("Y (m)")
+        fig.colorbar(c,ax = ax[0,1],fraction=0.046, pad=0.04)
+
+        # Plotting the directivity
+        ax[1,1].axis("off")
+        ax = fig.add_subplot(224,projection = 'polar')
+        c = ax.plot(theta,10*np.log10(directivity))
+        ax.set_rmin(-20)
+        ax.set_rticks([0,-5,-10,-15,-20])
+        ax.set_aspect('equal')
+        ax.set_title(str("Directivity (dB) at {0} m".format(directivity_distance)))
+
+        fig.show()
+
         
+        if method == "Rayleigh":
+            ax.set_thetamin(-90)
+            ax.set_thetamax(90)
         
-    if directivity_only:
-        return directivity, theta
-    else:
-        return pressure_field, directivity, theta
+        fig.tight_layout(pad = 0.5)
+        fig.show()
+        
+    if directivity_plot_alone:
+        fig, ax = plt.subplots(1,2,subplot_kw={'projection': 'polar'})
+        ax[0].plot(theta,directivity)
+        ax[0].set_title("Normalized Directivity")
+        
+        ax[1].plot(theta,10*np.log10(directivity))
+        ax[1].set_title("Normalized Directivity (dB)")
+        ax[1].set_rmin(-20)
+        ax[1].set_rticks([0,-5,-10,-15,-20])
+        
+        fig.tight_layout()
+        fig.set_size_inches(8,8)
+        fig.show()
 
 """
 Creating a field from a monopole
@@ -260,8 +353,8 @@ def get_distance(source_point,field_point):
     # If the source point is 3-dimensional, make the field_point 3-dimensional too
     # The field points (for now) will still be plotted in 2D so this is only a 
     # change within this function
-    if len(source_point) == 3:
-        field_point = np.array([field_point[0],field_point[1],0.0])
+    # if len(source_point) == 3:
+    #     field_point = np.array([field_point[0],field_point[1],0.0])
 
     return la.norm(field_point - source_point)
 
@@ -298,7 +391,7 @@ def define_loudspeaker_array(num_speakers,cone_diameter,cone_separation,
 
     total_length = cone_diameter*num_speakers + cone_separation*num_speakers
 
-    cone_positions = np.array([]);
+    cone_positions = np.array([])
     for i in range(num_speakers):
         cone_positions = np.append(cone_positions,i*cone_separation + cone_diameter/2)
         
