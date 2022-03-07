@@ -2,6 +2,7 @@
 import scipy.linalg as la
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import scipy.special as sp
 
 """
@@ -46,7 +47,13 @@ def pressure_field(positions,frequencies,
 
     time = complex(time)
 
-    if dimensions == 2:
+    if dimensions == 1:
+        numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
+        x = np.linspace(x_range[0],x_range[1],numPoints_x)
+        x = x[x != 0]
+        field_points = x.reshape(-1,1)
+
+    elif dimensions == 2:
         numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
         numPoints_y = int(np.floor((y_range[1] - y_range[0]) * point_density))
         x = np.linspace(x_range[0],x_range[1],numPoints_x)
@@ -75,27 +82,34 @@ def pressure_field(positions,frequencies,
         
         if not directivity_only:
             pressure_field = rayleigh(positions,areas,velocities,phases,field_points,frequencies,time)
-            pressure_field = pressure_field.reshape(-1,numPoints_x) # It's the number of points in the x-direction that you use here
+            pressure_field = pressure_field.reshape(-1,len(x)) # It's the number of points in the x-direction that you use here
         
         # Getting the directivity at a given distance. Default is 1000 meters away
-        num_directivity_points = 1000
-        directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
-        directivity = np.abs(rayleigh(positions,areas,velocities,phases,directivity_points,frequencies,time))
-        directivity = directivity / np.max(directivity)
+        if not dimensions == 1:
+            num_directivity_points = 1000
+            directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
+            directivity = np.abs(rayleigh(positions,areas,velocities,phases,directivity_points,frequencies,time))
+            directivity = directivity / np.max(directivity)
     
     elif method == "Free Space":
         
         if not directivity_only:
             pressure_field = monopole_field(positions,frequencies,strengths,phases,field_points,time)
-            pressure_field = pressure_field.reshape(-1,numPoints_x)
+            pressure_field = pressure_field.reshape(-1,len(x))
         
         # Getting the directivity at a given distance. Default is 1000 meters away
-        num_directivity_points = 10000
-        directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
-        directivity = np.abs(monopole_field(positions,frequencies,strengths,phases,directivity_points,time))
-        directivity = directivity / np.max(directivity)
+        if not dimensions == 1:
+            num_directivity_points = 1000
+            directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
+            directivity = np.abs(monopole_field(positions,frequencies,strengths,phases,directivity_points,time))
+            directivity = directivity / np.max(directivity)
     
     # Only show plots if you calculated the entirie pressure field
+    if dimensions == 1:
+        plot_1D(x,pressure_field,positions,show_plots,color_limits)
+        theta = 0
+        directivity = 0
+
     if dimensions == 2:
         plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits)
 
@@ -108,6 +122,50 @@ def pressure_field(positions,frequencies,
         return directivity, theta
     else:
         return pressure_field, directivity, theta
+
+def plot_1D(x,pressure_field,positions,show_plots,color_limits):
+
+    if show_plots:
+        # Defining the figure
+        fig = plt.figure()
+        fig.set_size_inches(8,8)
+
+        # Plotting the real part
+        ax = fig.add_subplot(221)
+        ax.plot(x,np.real(pressure_field)[0,:])
+        ax.scatter(positions[:,0],np.zeros(len(positions[:,0])),color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.set_aspect('auto')
+        ax.set_title("Real Part")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Re\{Pressure\}")
+        ax.set_ylim(color_limits[0],color_limits[1])
+        
+
+        # Plotting the imaginary part
+        ax = fig.add_subplot(223)
+        ax.plot(x,np.imag(pressure_field)[0,:])
+        ax.scatter(positions[:,0],np.zeros(len(positions[:,0])),color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.set_aspect('auto')
+        ax.set_title("Imaginary Part")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Im\{Pressure\}")
+        ax.set_ylim(color_limits[0],color_limits[1])
+        ax.grid("on")
+
+        # Plotting the magnitude
+        ax = fig.add_subplot(222)
+        ax.plot(x,np.abs(pressure_field)[0,:])
+        ax.scatter(positions[:,0],np.zeros(len(positions[:,0])),color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.set_aspect('auto')
+        ax.set_title("Magnitude")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("|Pressure|")
+        ax.set_ylim(color_limits[0]*0.05,color_limits[1])
+        ax.grid("on")
+        
+        fig.tight_layout(pad = 0.5)
+        fig.show()
+        
 
 def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits):
 
@@ -176,42 +234,56 @@ def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,dir
         fig.set_size_inches(8,8)
         fig.show()
 
-def plot_3D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits):
+def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits):
 
     if show_plots and not directivity_only:
         # Defining the figure
-        fig, ax = plt.subplots(2,2)
+        fig = plt.figure()
         fig.set_size_inches(8,8)
 
+        # Adding opacity to the colormap
+        cmap = plt.cm.RdBu_r
+        my_RdBu = cmap(np.arange(cmap.N))
+        my_RdBu[:,-1] = np.linspace(-1,1,cmap.N)
+        my_RdBu[:,-1] = np.abs(my_RdBu[:,-1])
+        my_RdBu = colors.ListedColormap(my_RdBu)
+
+        cmap = plt.cm.jet
+        my_jet = cmap(np.arange(cmap.N))
+        my_jet[:,-1] = np.linspace(0,1,cmap.N)
+        my_jet = colors.ListedColormap(my_jet)
+
         # Plotting the real part
-        c = ax[0,0].pcolormesh(X,Y,np.real(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
-        ax[0,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
-        ax[0,0].set_aspect('equal')
-        ax[0,0].set_title("Real Part")
-        ax[0,0].set_xlabel("X (m)")
-        ax[0,0].set_ylabel("Y (m)")
-        fig.colorbar(c,ax = ax[0,0],fraction=0.046, pad=0.04)
+        ax = fig.add_subplot(221,projection = '3d')
+        c = ax.scatter(X,Y,Z,np.real(pressure_field), c = np.real(pressure_field),cmap = my_RdBu,vmin = color_limits[0],vmax = color_limits[1],edgecolors = None)
+        ax.scatter(positions[:,0],positions[:,1],positions[:,2],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.set_aspect('auto')
+        ax.set_title("Real Part")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        fig.colorbar(c,ax = ax,fraction=0.046, pad=0.04)
 
         # Plotting the imaginary part
-        c = ax[1,0].pcolormesh(X,Y,np.imag(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
-        ax[1,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
-        ax[1,0].set_aspect('equal')
-        ax[1,0].set_title("Imaginary Part")
-        ax[1,0].set_xlabel("X (m)")
-        ax[1,0].set_ylabel("Y (m)")
-        fig.colorbar(c,ax = ax[1,0],fraction=0.046, pad=0.04)
+        ax = fig.add_subplot(223,projection = '3d')
+        c = ax.scatter(X,Y,Z,np.imag(pressure_field), c = np.imag(pressure_field),cmap = my_RdBu,vmin = color_limits[0],vmax = color_limits[1],edgecolors = None)
+        ax.scatter(positions[:,0],positions[:,1],positions[:,2],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.set_aspect('auto')
+        ax.set_title("Imaginary Part")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        fig.colorbar(c,ax = ax,fraction=0.046, pad=0.04)
 
         # Plotting the magnitude
-        c = ax[0,1].pcolormesh(X,Y,np.abs(pressure_field),shading = "gouraud",cmap = "jet",vmin = 0,vmax = color_limits[1])
-        ax[0,1].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
-        ax[0,1].set_aspect('equal')
-        ax[0,1].set_title("Pressure Magnitude")
-        ax[0,1].set_xlabel("X (m)")
-        ax[0,1].set_ylabel("Y (m)")
-        fig.colorbar(c,ax = ax[0,1],fraction=0.046, pad=0.04)
+        ax = fig.add_subplot(222,projection = '3d')
+        c = ax.scatter(X,Y,Z,np.abs(pressure_field), c = np.abs(pressure_field),cmap = my_jet,vmin = 0,vmax = color_limits[1],edgecolors = None)
+        ax.scatter(positions[:,0],positions[:,1],positions[:,2],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.set_aspect('auto')
+        ax.set_title("Magnitude")
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        fig.colorbar(c,ax = ax,fraction=0.046, pad=0.04)
 
         # Plotting the directivity
-        ax[1,1].axis("off")
         ax = fig.add_subplot(224,projection = 'polar')
         c = ax.plot(theta,10*np.log10(directivity))
         ax.set_rmin(-20)
@@ -350,11 +422,11 @@ Get the distance between two 2D points
 """
 def get_distance(source_point,field_point):
 
-    # If the source point is 3-dimensional, make the field_point 3-dimensional too
-    # The field points (for now) will still be plotted in 2D so this is only a 
-    # change within this function
-    # if len(source_point) == 3:
-    #     field_point = np.array([field_point[0],field_point[1],0.0])
+    if len(source_point) == 3 and len(field_point) == 1:
+        field_point = np.array([field_point[0],0.0,0.0])
+
+    if len(source_point) == 3 and len(field_point) == 2:
+        field_point = np.array([field_point[0],field_point[1],0.0])
 
     return la.norm(field_point - source_point)
 
