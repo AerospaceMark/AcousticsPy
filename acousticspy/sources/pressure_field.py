@@ -256,6 +256,13 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
 Get the distance between two 2D points
 """
 def get_distance(source_point,field_point):
+
+    # If the source point is 3-dimensional, make the field_point 3-dimensional too
+    # The field points (for now) will still be plotted in 2D so this is only a 
+    # change within this function
+    if len(source_point) == 3:
+        field_point = np.array([field_point[0],field_point[1],0.0])
+
     return la.norm(field_point - source_point)
 
 """
