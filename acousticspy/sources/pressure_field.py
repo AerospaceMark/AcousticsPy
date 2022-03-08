@@ -19,30 +19,31 @@ def pressure_field(positions,frequencies,
                z_range = [-1,1],
                point_density = 100,
                directivity_distance = 1000,
-               method = "Free Space",
+               num_directivity_points = 10000,
+               method = "Monopole Addition",
                dimensions = 2,
                directivity_only = False,
                directivity_plot_alone = False,
                show_plots = False,
-               color_limits = [-50,50]):
+               color_limits = [-100,100]):
     
     # Making all arrays that describe the sources be equal lengths
     num_sources = len(positions)
     positions = np.asarray(positions)
     
-    if len(frequencies) == 1:
+    if np.size(frequencies) == 1:
         frequencies = np.ones(num_sources) * frequencies
     
-    if len(areas) == 1:
+    if np.size(areas) == 1:
         areas = np.ones(num_sources) * areas
         
-    if len(strengths) == 1:
+    if np.size(strengths) == 1:
         strengths = np.ones(num_sources) * strengths
         
-    if len(phases) == 1:
+    if np.size(phases) == 1:
         phases = np.ones(num_sources) * phases
 
-    if len(velocities) == 1:
+    if np.size(velocities) == 1:
         velocities = np.ones(num_sources) * velocities
 
     time = complex(time)
@@ -83,30 +84,32 @@ def pressure_field(positions,frequencies,
         if not directivity_only:
             pressure_field = rayleigh(positions,areas,velocities,phases,field_points,frequencies,time)
             pressure_field = pressure_field.reshape(-1,len(x)) # It's the number of points in the x-direction that you use here
+        else:
+            pressure_field = 0
         
         # Getting the directivity at a given distance. Default is 1000 meters away
         if not dimensions == 1:
-            num_directivity_points = 1000
             directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
             directivity = np.abs(rayleigh(positions,areas,velocities,phases,directivity_points,frequencies,time))
             directivity = directivity / np.max(directivity)
     
-    elif method == "Free Space":
+    elif method == "Monopole Addition":
         
         if not directivity_only:
             pressure_field = monopole_field(positions,frequencies,strengths,phases,field_points,time)
             pressure_field = pressure_field.reshape(-1,len(x))
+        else:
+            pressure_field = 0
         
         # Getting the directivity at a given distance. Default is 1000 meters away
         if not dimensions == 1:
-            num_directivity_points = 1000
             directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
             directivity = np.abs(monopole_field(positions,frequencies,strengths,phases,directivity_points,time))
             directivity = directivity / np.max(directivity)
     
     # Only show plots if you calculated the entirie pressure field
     if dimensions == 1:
-        plot_1D(x,pressure_field,positions,show_plots,color_limits)
+        plot_1D(x,pressure_field,positions,show_plots,color_limits,directivity_only)
         theta = 0
         directivity = 0
 
@@ -115,17 +118,12 @@ def pressure_field(positions,frequencies,
 
     if dimensions == 3:
         plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits)
-    
         
-        
-    if directivity_only:
-        return directivity, theta
-    else:
-        return pressure_field, directivity, theta
+    return pressure_field, directivity, theta
 
-def plot_1D(x,pressure_field,positions,show_plots,color_limits):
+def plot_1D(x,pressure_field,positions,show_plots,color_limits,directivity_only):
 
-    if show_plots:
+    if show_plots and not directivity_only:
         # Defining the figure
         fig = plt.figure()
         fig.set_size_inches(8,8)
@@ -139,7 +137,7 @@ def plot_1D(x,pressure_field,positions,show_plots,color_limits):
         ax.set_xlabel("X (m)")
         ax.set_ylabel("Re\{Pressure\}")
         ax.set_ylim(color_limits[0],color_limits[1])
-        
+        ax.grid("on")
 
         # Plotting the imaginary part
         ax = fig.add_subplot(223)
