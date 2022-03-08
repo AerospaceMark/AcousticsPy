@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.linalg as la
 import scipy.special as sp
+import matplotlib.pyplot as plt
 
 def baffled_circular_piston_directivity(radius,frequency,theta):
     c = 343
@@ -55,3 +56,58 @@ def get_square_elements(total_area,num_elements):
     positions = positions[1:]
 
     return positions, areas
+
+"""
+Define an array of loudspeakers
+"""
+
+def define_loudspeaker_array(num_speakers,cone_diameter,cone_separation,
+                             cone_strengths = [1],
+                             cone_phases = [0],
+                             num_points = 100,
+                             show_plots = False):
+
+    if np.size(cone_strengths) == 1:
+        cone_strengths = np.ones(num_speakers) * cone_strengths
+        
+    if np.size(cone_phases) == 1:
+        cone_phases = np.ones(num_speakers) * cone_phases
+
+    total_length = cone_diameter*num_speakers + cone_separation*num_speakers
+
+    cone_positions = np.array([])
+    for i in range(num_speakers):
+        cone_positions = np.append(cone_positions,i*cone_separation + cone_diameter/2)
+        
+    # Centering about the origin
+    cone_positions = cone_positions - max(cone_positions)/2 - cone_diameter/4
+
+
+    # Creating the array of mini-sources
+    positions = np.linspace(min(cone_positions) - cone_diameter/2,max(cone_positions)+cone_diameter/2,num_points)
+    strengths = np.zeros(len(positions))
+    phases = np.zeros(len(positions))
+    for i in range(0,len(positions)):
+
+        for j in range(0,num_speakers):
+
+            if np.abs(positions[i] - cone_positions[j]) <= cone_diameter:
+                strengths[i] = cone_strengths[j]
+                phases[i] = cone_phases[j]
+
+    if show_plots:
+        plt.figure()
+        plt.plot(positions,strengths)
+        plt.title("Speaker Cone Source Strengths")
+        plt.xlabel("Position (m)")
+        plt.ylabel("Cone Source Strength (m^3/s)")
+        
+        plt.figure()
+        plt.plot(positions,phases)
+        plt.title("Speaker Cone Source Phases")
+        plt.xlabel("Position (m)")
+        plt.ylabel("Cone Phase (rad/s)")
+
+        plt.show()
+        
+    return positions, strengths, phases, cone_positions
