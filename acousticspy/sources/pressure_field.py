@@ -53,6 +53,7 @@ def pressure_field(positions,frequencies,
         x = np.linspace(x_range[0],x_range[1],numPoints_x)
         x = x[x != 0]
         field_points = x.reshape(-1,1)
+        grid = x
 
     elif dimensions == 2:
         numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
@@ -131,7 +132,7 @@ def plot_1D(x,pressure_field,positions,show_plots,pressure_limits,directivity_on
         # Plotting the real part
         ax = fig.add_subplot(221)
         ax.plot(x,np.real(pressure_field)[0,:])
-        ax.scatter(positions[:,0],np.zeros(len(positions[:,0])),pressure = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.scatter(positions[:,0],np.zeros(len(positions[:,0])),color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax.set_aspect('auto')
         ax.set_title("Real Part")
         ax.set_xlabel("X (m)")
