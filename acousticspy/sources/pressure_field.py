@@ -9,23 +9,23 @@ import scipy.special as sp
 Creating an entire pressure field based on the locations of various sources
 """
 def pressure_field(positions,frequencies,
-               time = 0.0,
-               areas = [0.001],
-               velocities = [0.01],
-               strengths = [0.01],
-               phases = [0],
-               x_range = [-1,1],
-               y_range = [-1,1],
-               z_range = [-1,1],
-               point_density = 100,
-               directivity_distance = 1000,
-               num_directivity_points = 10000,
-               method = "Monopole Addition",
-               dimensions = 2,
-               directivity_only = False,
-               directivity_plot_alone = False,
-               show_plots = False,
-               color_limits = [-100,100]):
+                    time = 0.0,
+                    areas = [0.001],
+                    velocities = [0.01],
+                    strengths = [0.01],
+                    phases = [0],
+                    x_range = [-1,1],
+                    y_range = [-1,1],
+                    z_range = [-1,1],
+                    point_density = 100,
+                    directivity_distance = 1000,
+                    num_directivity_points = 10000,
+                    method = "Monopole Addition",
+                    dimensions = 2,
+                    directivity_only = False,
+                    directivity_plot_alone = False,
+                    show_plots = False,
+                    pressure_limits = [-100,100]):
     
     # Making all arrays that describe the sources be equal lengths
     num_sources = len(positions)
@@ -109,19 +109,19 @@ def pressure_field(positions,frequencies,
     
     # Only show plots if you calculated the entirie pressure field
     if dimensions == 1:
-        plot_1D(x,pressure_field,positions,show_plots,color_limits,directivity_only)
+        plot_1D(x,pressure_field,positions,show_plots,pressure_limits,directivity_only)
         theta = 0
         directivity = 0
 
     if dimensions == 2:
-        plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits)
+        plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,pressure_limits)
 
     if dimensions == 3:
-        plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits)
+        plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,pressure_limits)
         
-    return pressure_field, directivity, theta
+    return pressure_field, grid, directivity, theta
 
-def plot_1D(x,pressure_field,positions,show_plots,color_limits,directivity_only):
+def plot_1D(x,pressure_field,positions,show_plots,pressure_limits,directivity_only):
 
     if show_plots and not directivity_only:
         # Defining the figure
@@ -131,12 +131,12 @@ def plot_1D(x,pressure_field,positions,show_plots,color_limits,directivity_only)
         # Plotting the real part
         ax = fig.add_subplot(221)
         ax.plot(x,np.real(pressure_field)[0,:])
-        ax.scatter(positions[:,0],np.zeros(len(positions[:,0])),color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
+        ax.scatter(positions[:,0],np.zeros(len(positions[:,0])),pressure = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax.set_aspect('auto')
         ax.set_title("Real Part")
         ax.set_xlabel("X (m)")
-        ax.set_ylabel("Re\{Pressure\}")
-        ax.set_ylim(color_limits[0],color_limits[1])
+        ax.set_ylabel("Re{Pressure}")
+        ax.set_ylim(pressure_limits[0],pressure_limits[1])
         ax.grid("on")
 
         # Plotting the imaginary part
@@ -146,8 +146,8 @@ def plot_1D(x,pressure_field,positions,show_plots,color_limits,directivity_only)
         ax.set_aspect('auto')
         ax.set_title("Imaginary Part")
         ax.set_xlabel("X (m)")
-        ax.set_ylabel("Im\{Pressure\}")
-        ax.set_ylim(color_limits[0],color_limits[1])
+        ax.set_ylabel("Im{Pressure}")
+        ax.set_ylim(pressure_limits[0],pressure_limits[1])
         ax.grid("on")
 
         # Plotting the magnitude
@@ -158,14 +158,14 @@ def plot_1D(x,pressure_field,positions,show_plots,color_limits,directivity_only)
         ax.set_title("Magnitude")
         ax.set_xlabel("X (m)")
         ax.set_ylabel("|Pressure|")
-        ax.set_ylim(color_limits[0]*0.05,color_limits[1])
+        ax.set_ylim(pressure_limits[0]*0.05,pressure_limits[1])
         ax.grid("on")
         
         fig.tight_layout(pad = 0.5)
         fig.show()
         
 
-def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits):
+def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,pressure_limits):
 
     if show_plots and not directivity_only:
         # Defining the figure
@@ -173,7 +173,7 @@ def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,dir
         fig.set_size_inches(8,8)
 
         # Plotting the real part
-        c = ax[0,0].pcolormesh(X,Y,np.real(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
+        c = ax[0,0].pcolormesh(X,Y,np.real(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = pressure_limits[0],vmax = pressure_limits[1])
         ax[0,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax[0,0].set_aspect('equal')
         ax[0,0].set_title("Real Part")
@@ -182,7 +182,7 @@ def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,dir
         fig.colorbar(c,ax = ax[0,0],fraction=0.046, pad=0.04)
 
         # Plotting the imaginary part
-        c = ax[1,0].pcolormesh(X,Y,np.imag(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = color_limits[0],vmax = color_limits[1])
+        c = ax[1,0].pcolormesh(X,Y,np.imag(pressure_field),shading = "gouraud",cmap = "RdBu",vmin = pressure_limits[0],vmax = pressure_limits[1])
         ax[1,0].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax[1,0].set_aspect('equal')
         ax[1,0].set_title("Imaginary Part")
@@ -191,7 +191,7 @@ def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,dir
         fig.colorbar(c,ax = ax[1,0],fraction=0.046, pad=0.04)
 
         # Plotting the magnitude
-        c = ax[0,1].pcolormesh(X,Y,np.abs(pressure_field),shading = "gouraud",cmap = "jet",vmin = 0,vmax = color_limits[1])
+        c = ax[0,1].pcolormesh(X,Y,np.abs(pressure_field),shading = "gouraud",cmap = "jet",vmin = 0,vmax = pressure_limits[1])
         ax[0,1].scatter(positions[:,0],positions[:,1],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax[0,1].set_aspect('equal')
         ax[0,1].set_title("Pressure Magnitude")
@@ -202,11 +202,11 @@ def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,dir
         # Plotting the directivity
         ax[1,1].axis("off")
         ax = fig.add_subplot(224,projection = 'polar')
-        c = ax.plot(theta,10*np.log10(directivity))
-        ax.set_rmin(-20)
-        ax.set_rticks([0,-5,-10,-15,-20])
+        c = ax.plot(theta,20*np.log10(directivity))
+        ax.set_rmin(-40)
+        ax.set_rticks([0,-10,-20,-30,-40])
         ax.set_aspect('equal')
-        ax.set_title(str("Directivity (dB) at {0} m".format(directivity_distance)))
+        ax.set_title(str("Beam Pattern (dB) at {0} m".format(directivity_distance)))
 
         fig.show()
 
@@ -223,16 +223,16 @@ def plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,dir
         ax[0].plot(theta,directivity)
         ax[0].set_title("Normalized Directivity")
         
-        ax[1].plot(theta,10*np.log10(directivity))
-        ax[1].set_title("Normalized Directivity (dB)")
-        ax[1].set_rmin(-20)
-        ax[1].set_rticks([0,-5,-10,-15,-20])
+        ax[1].plot(theta,20*np.log10(directivity))
+        ax[1].set_title("Beam Pattern (dB)")
+        ax[1].set_rmin(-40)
+        ax[1].set_rticks([0,-10,-20,-30,-40])
         
         fig.tight_layout()
         fig.set_size_inches(8,8)
         fig.show()
 
-def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,color_limits):
+def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,pressure_limits):
 
     if show_plots and not directivity_only:
         # Defining the figure
@@ -253,7 +253,7 @@ def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,d
 
         # Plotting the real part
         ax = fig.add_subplot(221,projection = '3d')
-        c = ax.scatter(X,Y,Z,np.real(pressure_field), c = np.real(pressure_field),cmap = my_RdBu,vmin = color_limits[0],vmax = color_limits[1],edgecolors = None)
+        c = ax.scatter(X,Y,Z,np.real(pressure_field), c = np.real(pressure_field),cmap = my_RdBu,vmin = pressure_limits[0],vmax = pressure_limits[1],edgecolors = None)
         ax.scatter(positions[:,0],positions[:,1],positions[:,2],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax.set_aspect('auto')
         ax.set_title("Real Part")
@@ -263,7 +263,7 @@ def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,d
 
         # Plotting the imaginary part
         ax = fig.add_subplot(223,projection = '3d')
-        c = ax.scatter(X,Y,Z,np.imag(pressure_field), c = np.imag(pressure_field),cmap = my_RdBu,vmin = color_limits[0],vmax = color_limits[1],edgecolors = None)
+        c = ax.scatter(X,Y,Z,np.imag(pressure_field), c = np.imag(pressure_field),cmap = my_RdBu,vmin = pressure_limits[0],vmax = pressure_limits[1],edgecolors = None)
         ax.scatter(positions[:,0],positions[:,1],positions[:,2],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax.set_aspect('auto')
         ax.set_title("Imaginary Part")
@@ -273,7 +273,7 @@ def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,d
 
         # Plotting the magnitude
         ax = fig.add_subplot(222,projection = '3d')
-        c = ax.scatter(X,Y,Z,np.abs(pressure_field), c = np.abs(pressure_field),cmap = my_jet,vmin = 0,vmax = color_limits[1],edgecolors = None)
+        c = ax.scatter(X,Y,Z,np.abs(pressure_field), c = np.abs(pressure_field),cmap = my_jet,vmin = 0,vmax = pressure_limits[1],edgecolors = None)
         ax.scatter(positions[:,0],positions[:,1],positions[:,2],color = "black",marker = "o",facecolors = "white",linewidth = 1.5,s = 10)
         ax.set_aspect('auto')
         ax.set_title("Magnitude")
@@ -283,11 +283,11 @@ def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,d
 
         # Plotting the directivity
         ax = fig.add_subplot(224,projection = 'polar')
-        c = ax.plot(theta,10*np.log10(directivity))
-        ax.set_rmin(-20)
-        ax.set_rticks([0,-5,-10,-15,-20])
+        c = ax.plot(theta,20*np.log10(directivity))
+        ax.set_rmin(-40)
+        ax.set_rticks([0,-10,-20,-30,-40])
         ax.set_aspect('equal')
-        ax.set_title(str("Directivity (dB) at {0} m".format(directivity_distance)))
+        ax.set_title(str("Beam Pattern (dB) at {0} m".format(directivity_distance)))
 
         fig.show()
 
@@ -304,10 +304,10 @@ def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,d
         ax[0].plot(theta,directivity)
         ax[0].set_title("Normalized Directivity")
         
-        ax[1].plot(theta,10*np.log10(directivity))
-        ax[1].set_title("Normalized Directivity (dB)")
-        ax[1].set_rmin(-20)
-        ax[1].set_rticks([0,-5,-10,-15,-20])
+        ax[1].plot(theta,20*np.log10(directivity))
+        ax[1].set_title("Beam Pattern (dB)")
+        ax[1].set_rmin(-40)
+        ax[1].set_rticks([0,-10,-20,-30,-40])
         
         fig.tight_layout()
         fig.set_size_inches(8,8)
