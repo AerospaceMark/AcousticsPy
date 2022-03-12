@@ -83,33 +83,17 @@ def pressure_field(positions,frequencies,
         Y = grid[1]
         Z = grid[2]
     
-    if method == "Rayleigh":
-        
-        if not directivity_only:
-            pressure_field = rayleigh(positions,areas,velocities,phases,field_points,frequencies,time)
-            pressure_field = pressure_field.reshape(-1,len(x)) # It's the number of points in the x-direction that you use here
-        else:
-            pressure_field = 0
-        
-        # Getting the directivity at a given distance. Default is 1000 meters away
-        if not dimensions == 1:
-            directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
-            directivity = np.abs(rayleigh(positions,areas,velocities,phases,directivity_points,frequencies,time))
-            directivity = directivity / np.max(directivity)
+    if not directivity_only:
+        pressure_field = get_field(positions,frequencies,strengths,velocities,areas,phases,field_points,time,method)
+        pressure_field = pressure_field.reshape(-1,len(x)) # It's the number of points in the x-direction that you use here
+    else:
+        pressure_field = 0
     
-    elif method == "Monopole Addition":
-        
-        if not directivity_only:
-            pressure_field = monopole_field(positions,frequencies,strengths,phases,field_points,time)
-            pressure_field = pressure_field.reshape(-1,len(x))
-        else:
-            pressure_field = 0
-        
-        # Getting the directivity at a given distance. Default is 1000 meters away
-        if not dimensions == 1:
-            directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
-            directivity = np.abs(monopole_field(positions,frequencies,strengths,phases,directivity_points,time))
-            directivity = directivity / np.max(directivity)
+    # Getting the directivity at a given distance. Default is 1000 meters away
+    if not dimensions == 1:
+        directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
+        directivity = np.abs(get_field(positions,frequencies,strengths,velocities,areas,phases,directivity_points,time,method))
+        directivity = directivity / np.max(directivity)
     
     # Only show plots if you calculated the entirie pressure field
     if dimensions == 1:
@@ -318,15 +302,17 @@ def plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,d
         fig.show()
 
 """
-Creating a field from a monopole
+Creating a field
 """
 
-def monopole_field(positions,frequencies,strengths,phases,field_points,time):
+def get_field(positions,frequencies,strengths,velocities,areas,phases,field_points,time,method):
     
     # Convert everything to a numpy array
     positions = np.asarray(positions)
     strengths = np.asarray(strengths)
     phases = np.asarray(phases)
+    velocities = np.asarray(velocities)
+    areas = np.asarray(areas)
     field_points = np.asarray(field_points)
 
     if len(positions[0]) == 2 and len(field_points[0]) == 1:
@@ -360,88 +346,29 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
     FREQUENCIES = np.zeros([len(field_points),len(strengths)])
     PHASES = np.zeros([len(field_points),len(strengths)])
     STRENGTHS = np.zeros([len(field_points),len(strengths)])
+    AREAS = np.zeros([len(field_points),len(strengths)])
+    VELOCITIES = np.zeros([len(field_points),len(strengths)])
 
     for i in range(len(strengths)):
         DISTANCES[:,i] = la.norm(field_points - positions[i,:],axis = 1)
         FREQUENCIES[:,i] = np.ones(len(field_points)) * frequencies[i]
         PHASES[:,i] = np.ones(len(field_points)) * phases[i]
         STRENGTHS[:,i] = np.ones(len(field_points)) * strengths[i]
+        AREAS[:,i] = np.ones(len(field_points)) * areas[i]
+        VELOCITIES[:,i] = np.ones(len(field_points)) * velocities[i]
 
     omegas = 2 * np.pi * FREQUENCIES
     k = omegas/c
     A = 1j*rho_0*c*k/(4*np.pi) * STRENGTHS
 
-    print(DISTANCES)
-
     for i in range(len(strengths)):
 
-        responses = responses + A * np.exp(-1j*k*DISTANCES)/DISTANCES * np.exp(1j * PHASES) * np.exp(1j*omegas*time)
-
-    # Each column represents the contribution to a point by a particular source. We must sum them up at each point
-    responses = np.sum(responses,axis = 1)
-            
-    return responses
-
-"""
-Perform Rayleigh Integration
-"""
-
-def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
-    
-    # Convert everything to a numpy array
-    positions = np.asarray(positions)
-    areas = np.asarray(areas)
-    velocities = np.asarray(velocities)
-    phases = np.asarray(phases)
-    field_points = np.asarray(field_points)
-
-    if len(positions[0]) == 2 and len(field_points[0]) == 1:
-        new_points = np.zeros([len(field_points),2])
-        for i in range(len(field_points)):
-            new_points[i] = np.array([field_points[i,0],0.0])
-        field_points = new_points
-
-    if len(positions[0]) == 3 and len(field_points[0]) == 1:
-        new_points = np.zeros([len(field_points),3])
-        for i in range(len(field_points)):
-            new_points[i] = np.array([field_points[i,0],0.0,0.0])
-        field_points = new_points
-
-    if len(positions[0]) == 3 and len(field_points[0]) == 2:
-        new_points = np.zeros([len(field_points),3])
-        for i in range(len(field_points)):
-            new_points[i] = np.array([field_points[i,0],field_points[i,1],0.0])
-        field_points = new_points
-    
-    # Initialize the responses
-    responses = np.zeros([len(field_points),len(velocities)], dtype = complex)
-    
-    # Define constants
-    c = 343 # Phase speed in air
-    rho_0 = 1.2 # Density of air
-
-    # Creating Early Mesh Grids. This creates some that only need to be created once
-    distances = np.zeros([len(field_points),len(velocities)])
-    for i in range(len(velocities)):
-        distances[:,i] = la.norm(field_points - positions[i,:],axis = 1)
-
-    print(distances)
-
-    FREQUENCIES, _ = np.meshgrid(frequencies,distances[:,0])
-    PHASES, _ = np.meshgrid(frequencies,distances[:,0])
-    VELOCITIES, _ = np.meshgrid(velocities,distances[:,0])
-    AREAS, _ = np.meshgrid(areas,distances[:,0])
-
-    print(AREAS)
-    
-    for i in range(len(velocities)):
-
-        omegas = 2 * np.pi * FREQUENCIES
-        k = omegas/c
-
-        responses = responses + (1j * omegas * rho_0 / (2 * np.pi) * 
+        if method == "Monopole Addition":
+            responses = responses + A * np.exp(-1j*k*DISTANCES)/DISTANCES * np.exp(1j * PHASES) * np.exp(1j*omegas*time)
+        elif method == "Rayleigh":
+            responses = responses + (1j * omegas * rho_0 / (2 * np.pi) * 
                                 VELOCITIES * 
-                                np.exp(-1j * k * distances)/distances * 
+                                np.exp(-1j * k * DISTANCES)/DISTANCES * 
                                 np.exp(1j*PHASES) * np.exp(1j*omegas*time) * 
                                 AREAS)
 
@@ -449,19 +376,6 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
     responses = np.sum(responses,axis = 1)
             
     return responses
-
-"""
-Get the distance between two 2D points
-"""
-def get_distance(source_point,field_point):
-
-    if len(source_point) == 3 and len(field_point) == 1:
-        field_point = np.array([field_point[0],0.0,0.0])
-
-    if len(source_point) == 3 and len(field_point) == 2:
-        field_point = np.array([field_point[0],field_point[1],0.0])
-
-    return la.norm(field_point - source_point)
 
 """
 Define an arc for whatever reasons you may want to do so
