@@ -1,9 +1,11 @@
 
+from fractions import Fraction
 import scipy.linalg as la
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import scipy.special as sp
+from sympy import re
 
 """
 Creating an entire pressure field based on the locations of various sources
@@ -325,41 +327,36 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
     strengths = np.asarray(strengths)
     phases = np.asarray(phases)
     field_points = np.asarray(field_points)
+
+    if len(positions[0]) == 3 and len(field_points[0]) == 2:
+        new_points = np.zeros([len(field_points),3])
+        for i in range(len(field_points)):
+            new_points[i] = np.array([field_points[i,0],field_points[i,1],0.0])
+        field_points = new_points
     
     # Initialize the responses
-    responses = np.zeros([len(field_points),1], dtype = complex)
+    responses = np.zeros([len(field_points),len(strengths)], dtype = complex)
     
     # Define constants
     c = 343 # Phase speed in air
     rho_0 = 1.2 # Density of air
-    
-    for i in range(len(field_points)):
-        
-        # Define the current field point
-        current_field_point = field_points[i,:]
-        
-        # Loop over all sources for a particular theta
-        for j in range(len(strengths)):
-            
-            # Define the current source
-            current_source_location = positions[j,:]
-            current_source_strength = strengths[j]
-            current_source_phase = phases[j]
-            current_source_frequency = frequencies[j]
-            #print(current_source_phase)
-            
-            # Define frequency-dependent quantities
-            omega = 2 * np.pi * current_source_frequency # angular frequency
-            k = omega / c # wavenumber
-            
-            # Get the distance between the field point and the source
-            distance = get_distance(current_source_location,current_field_point)
-            
-            # get contribution to a theta location from an individual source
-            A = 1j*rho_0*c*k/(4*np.pi) * current_source_strength
-            current_source_impact = A * np.exp(-1j*k*distance)/distance * np.exp(1j * current_source_phase) * np.exp(1j*omega*time)
-            
-            responses[i] = responses[i] + current_source_impact
+
+    for i in range(len(strengths)):
+
+        current_source_location = positions[i,:]
+        distances = la.norm(field_points - current_source_location,axis = 1)
+
+        FREQUENCIES, DISTANCES = np.meshgrid(frequencies,distances)
+        PHASES, _ = np.meshgrid(frequencies,distances)
+        STRENGTHS, _ = np.meshgrid(strengths,distances)
+
+        omegas = 2 * np.pi * FREQUENCIES
+        k = omegas/c
+        A = 1j*rho_0*c*k/(4*np.pi) * STRENGTHS
+
+        responses = responses + A * np.exp(-1j*k*DISTANCES)/DISTANCES * np.exp(1j * PHASES) * np.exp(1j*omegas*time)
+
+    responses = np.sum(responses,axis = 1)
             
     return responses
 

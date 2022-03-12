@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 total_area = 0.2
-num_elements = 500
+num_elements = 100
 
 positions_circle, areas_circle = ap.get_circle_elements(total_area,num_elements)
 positions_square, areas_square = ap.get_square_elements(total_area,num_elements)
@@ -22,19 +22,20 @@ positions_square, areas_square = ap.get_square_elements(total_area,num_elements)
 print("Total Circle Area = {0:.5f} m^2, number of elements is {1}".format(sum(areas_circle),len(areas_circle)))
 print("Total Square Area = {0:.5f} m^2, number of elements is {1}".format(sum(areas_square),len(areas_square)))
 
-velocities = np.ones(len(areas_circle))*0.1
+velocities = 0.01
 
 ap.pressure_field(positions_circle,
                   [2000],
                   areas = areas_circle,
                   velocities = velocities,
+                  strengths = 0.00001,
                   x_range = [0,2],
                   y_range = [-1,1],
                   z_range = [-1,1],
-                  color_limits = [-50,50],
-                  method = "Rayleigh",
+                  pressure_limits = [-50,50],
+                  method = "Monopole Addition",
                   dimensions = 3,
-                  point_density = 10,
+                  point_density = 5,
                   show_plots = True)
 
 plt.show()

@@ -4,3 +4,4 @@ dist/*
 *.egg-info*
 my_tests/*
 .vscode/*
+*.DS_Store
