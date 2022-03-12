@@ -328,12 +328,24 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
     phases = np.asarray(phases)
     field_points = np.asarray(field_points)
 
+    if len(positions[0]) == 2 and len(field_points[0]) == 1:
+        new_points = np.zeros([len(field_points),2])
+        for i in range(len(field_points)):
+            new_points[i] = np.array([field_points[i,0],0.0])
+        field_points = new_points
+
+    if len(positions[0]) == 3 and len(field_points[0]) == 1:
+        new_points = np.zeros([len(field_points),3])
+        for i in range(len(field_points)):
+            new_points[i] = np.array([field_points[i,0],0.0,0.0])
+        field_points = new_points
+
     if len(positions[0]) == 3 and len(field_points[0]) == 2:
         new_points = np.zeros([len(field_points),3])
         for i in range(len(field_points)):
             new_points[i] = np.array([field_points[i,0],field_points[i,1],0.0])
         field_points = new_points
-    
+
     # Initialize the responses
     responses = np.zeros([len(field_points),len(strengths)], dtype = complex)
     
@@ -341,14 +353,18 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
     c = 343 # Phase speed in air
     rho_0 = 1.2 # Density of air
 
+    # Creating Early Mesh Grids. This creates some that only need to be created once
+    distances = la.norm(field_points - positions[0,:],axis = 1)
+    FREQUENCIES, _ = np.meshgrid(frequencies,distances)
+    PHASES, _ = np.meshgrid(frequencies,distances)
+    STRENGTHS, _ = np.meshgrid(strengths,distances)
+
     for i in range(len(strengths)):
 
         current_source_location = positions[i,:]
         distances = la.norm(field_points - current_source_location,axis = 1)
 
-        FREQUENCIES, DISTANCES = np.meshgrid(frequencies,distances)
-        PHASES, _ = np.meshgrid(frequencies,distances)
-        STRENGTHS, _ = np.meshgrid(strengths,distances)
+        _, DISTANCES = np.meshgrid(frequencies,distances)
 
         omegas = 2 * np.pi * FREQUENCIES
         k = omegas/c
@@ -372,44 +388,87 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
     velocities = np.asarray(velocities)
     phases = np.asarray(phases)
     field_points = np.asarray(field_points)
+
+    if len(positions[0]) == 2 and len(field_points[0]) == 1:
+        new_points = np.zeros([len(field_points),2])
+        for i in range(len(field_points)):
+            new_points[i] = np.array([field_points[i,0],0.0])
+        field_points = new_points
+
+    if len(positions[0]) == 3 and len(field_points[0]) == 1:
+        new_points = np.zeros([len(field_points),3])
+        for i in range(len(field_points)):
+            new_points[i] = np.array([field_points[i,0],0.0,0.0])
+        field_points = new_points
+
+    if len(positions[0]) == 3 and len(field_points[0]) == 2:
+        new_points = np.zeros([len(field_points),3])
+        for i in range(len(field_points)):
+            new_points[i] = np.array([field_points[i,0],field_points[i,1],0.0])
+        field_points = new_points
     
     # Initialize the responses
-    responses = np.zeros([len(field_points),1], dtype = complex)
+    responses = np.zeros([len(field_points),len(velocities)], dtype = complex)
     
     # Define constants
     c = 343 # Phase speed in air
     rho_0 = 1.2 # Density of air
+
+    # Creating Early Mesh Grids. This creates some that only need to be created once
+    distances = la.norm(field_points - positions[0,:],axis = 1)
+    FREQUENCIES, _ = np.meshgrid(frequencies,distances)
+    PHASES, _ = np.meshgrid(frequencies,distances)
+    VELOCITIES, _ = np.meshgrid(velocities,distances)
+    AREAS, _ = np.meshgrid(areas,distances)
     
-    for i in range(len(field_points)):
+    for i in range(len(velocities)):
+
+        current_source_location = positions[i,:]
+        distances = la.norm(field_points - current_source_location,axis = 1)
+
+        _, DISTANCES = np.meshgrid(frequencies,distances)
+
+        omegas = 2 * np.pi * FREQUENCIES
+        k = omegas/c
+
+        responses = responses + (1j * omegas * rho_0 / (2 * np.pi) * 
+                                VELOCITIES * 
+                                np.exp(-1j * k * DISTANCES)/DISTANCES * 
+                                np.exp(1j*PHASES) * np.exp(1j*omegas*time) * 
+                                AREAS)
+
+    responses = np.sum(responses,axis = 1)
+
+    # for i in range(len(field_points)):
         
-        # Define the current field point
-        current_field_point = field_points[i,:]
+    #     # Define the current field point
+    #     current_field_point = field_points[i,:]
         
-        # Loop over all sources for a particular theta
-        for j in range(len(velocities)):
+    #     # Loop over all sources for a particular theta
+    #     for j in range(len(velocities)):
             
-            # Define the current source
-            current_source_location = positions[j,:]
-            current_source_velocity = velocities[j]
-            current_source_phase = phases[j]
-            current_source_area = areas[j]
-            current_source_frequency = frequencies[j]
+    #         # Define the current source
+    #         current_source_location = positions[j,:]
+    #         current_source_velocity = velocities[j]
+    #         current_source_phase = phases[j]
+    #         current_source_area = areas[j]
+    #         current_source_frequency = frequencies[j]
             
-            # Define frequency-dependent quantities
-            omega = 2 * np.pi * current_source_frequency # angular frequency
-            k = omega / c # wavenumber
+    #         # Define frequency-dependent quantities
+    #         omega = 2 * np.pi * current_source_frequency # angular frequency
+    #         k = omega / c # wavenumber
             
-            # Get the distance between the field point and the source
-            distance = get_distance(current_source_location,current_field_point)
+    #         # Get the distance between the field point and the source
+    #         distance = get_distance(current_source_location,current_field_point)
             
-            # get contribution to a theta location from an individual source
-            current_source_impact = (1j * omega * rho_0 / (2 * np.pi) * 
-                                    current_source_velocity * 
-                                    np.exp(-1j * k * distance)/distance * 
-                                    np.exp(1j*current_source_phase) * np.exp(1j*omega*time) * 
-                                    current_source_area)
+    #         # get contribution to a theta location from an individual source
+    #         current_source_impact = (1j * omega * rho_0 / (2 * np.pi) * 
+    #                                 current_source_velocity * 
+    #                                 np.exp(-1j * k * distance)/distance * 
+    #                                 np.exp(1j*current_source_phase) * np.exp(1j*omega*time) * 
+    #                                 current_source_area)
             
-            responses[i] = responses[i] + current_source_impact
+    #         responses[i] = responses[i] + current_source_impact
             
     return responses
 

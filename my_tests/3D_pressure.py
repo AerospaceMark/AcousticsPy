@@ -22,20 +22,21 @@ positions_square, areas_square = ap.get_square_elements(total_area,num_elements)
 print("Total Circle Area = {0:.5f} m^2, number of elements is {1}".format(sum(areas_circle),len(areas_circle)))
 print("Total Square Area = {0:.5f} m^2, number of elements is {1}".format(sum(areas_square),len(areas_square)))
 
-velocities = 0.01
+velocities = 0.001
+strengths = 0.000005
 
 ap.pressure_field(positions_circle,
                   [2000],
                   areas = areas_circle,
                   velocities = velocities,
-                  strengths = 0.00001,
+                  strengths = strengths,
                   x_range = [0,2],
                   y_range = [-1,1],
                   z_range = [-1,1],
                   pressure_limits = [-50,50],
-                  method = "Monopole Addition",
-                  dimensions = 3,
-                  point_density = 5,
+                  method = "Rayleigh",
+                  dimensions = 2,
+                  point_density = 100,
                   show_plots = True)
 
 plt.show()
