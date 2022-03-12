@@ -356,26 +356,24 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
 
     # Creating Early Mesh Grids. This creates some that only need to be created once
     # We need each column of the DISTANCES grid to equal the distance to each source
-    distances = np.zeros([len(field_points),len(strengths)])
-    for i in range(len(strengths)):
-        distances[:,i] = la.norm(field_points - positions[i,:],axis = 1)
-
-    FREQUENCIES, _ = np.meshgrid(frequencies,distances[:,0])
-    PHASES, _ = np.meshgrid(frequencies,distances[:,0])
-    STRENGTHS, _ = np.meshgrid(strengths,distances[:,0])
+    DISTANCES = np.zeros([len(field_points),len(strengths)])
+    FREQUENCIES = np.zeros([len(field_points),len(strengths)])
+    PHASES = np.zeros([len(field_points),len(strengths)])
+    STRENGTHS = np.zeros([len(field_points),len(strengths)])
 
     for i in range(len(strengths)):
+        DISTANCES[:,i] = la.norm(field_points - positions[i,:],axis = 1)
+        FREQUENCIES[:,i] = np.ones(len(field_points)) * frequencies[i]
+        PHASES[:,i] = np.ones(len(field_points)) * phases[i]
+        STRENGTHS[:,i] = np.ones(len(field_points)) * strengths[i]
 
-        current_source_location = positions[i,:]
-        #distances = la.norm(field_points - current_source_location,axis = 1)
+    omegas = 2 * np.pi * FREQUENCIES
+    k = omegas/c
+    A = 1j*rho_0*c*k/(4*np.pi) * STRENGTHS
 
-        _, DISTANCES = np.meshgrid(frequencies,distances)
+    print(DISTANCES)
 
-        DISTANCES = distances
-
-        omegas = 2 * np.pi * FREQUENCIES
-        k = omegas/c
-        A = 1j*rho_0*c*k/(4*np.pi) * STRENGTHS
+    for i in range(len(strengths)):
 
         responses = responses + A * np.exp(-1j*k*DISTANCES)/DISTANCES * np.exp(1j * PHASES) * np.exp(1j*omegas*time)
 
@@ -427,10 +425,14 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
     for i in range(len(velocities)):
         distances[:,i] = la.norm(field_points - positions[i,:],axis = 1)
 
+    print(distances)
+
     FREQUENCIES, _ = np.meshgrid(frequencies,distances[:,0])
     PHASES, _ = np.meshgrid(frequencies,distances[:,0])
     VELOCITIES, _ = np.meshgrid(velocities,distances[:,0])
     AREAS, _ = np.meshgrid(areas,distances[:,0])
+
+    print(AREAS)
     
     for i in range(len(velocities)):
 
@@ -443,7 +445,7 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
                                 np.exp(1j*PHASES) * np.exp(1j*omegas*time) * 
                                 AREAS)
 
-    # We just need the first column. All columns are duplicates of each other. WRONG!!!!!
+    # Each column represents the contribution to a point by a particular source. We must sum them up at each point
     responses = np.sum(responses,axis = 1)
             
     return responses
