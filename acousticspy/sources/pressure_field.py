@@ -1,12 +1,7 @@
-
-from fractions import Fraction
-from turtle import pos
 import scipy.linalg as la
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-import scipy.special as sp
-from sympy import re
 
 """
 Creating an entire pressure field based on the locations of various sources
