@@ -423,6 +423,8 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
     
     for i in range(len(velocities)):
 
+        print("Source {}".format(i))
+
         current_source_location = positions[i,:]
         distances = la.norm(field_points - current_source_location,axis = 1)
 
@@ -438,37 +440,6 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
                                 AREAS)
 
     responses = np.sum(responses,axis = 1)
-
-    # for i in range(len(field_points)):
-        
-    #     # Define the current field point
-    #     current_field_point = field_points[i,:]
-        
-    #     # Loop over all sources for a particular theta
-    #     for j in range(len(velocities)):
-            
-    #         # Define the current source
-    #         current_source_location = positions[j,:]
-    #         current_source_velocity = velocities[j]
-    #         current_source_phase = phases[j]
-    #         current_source_area = areas[j]
-    #         current_source_frequency = frequencies[j]
-            
-    #         # Define frequency-dependent quantities
-    #         omega = 2 * np.pi * current_source_frequency # angular frequency
-    #         k = omega / c # wavenumber
-            
-    #         # Get the distance between the field point and the source
-    #         distance = get_distance(current_source_location,current_field_point)
-            
-    #         # get contribution to a theta location from an individual source
-    #         current_source_impact = (1j * omega * rho_0 / (2 * np.pi) * 
-    #                                 current_source_velocity * 
-    #                                 np.exp(-1j * k * distance)/distance * 
-    #                                 np.exp(1j*current_source_phase) * np.exp(1j*omega*time) * 
-    #                                 current_source_area)
-            
-    #         responses[i] = responses[i] + current_source_impact
             
     return responses
 
