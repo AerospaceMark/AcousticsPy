@@ -1,5 +1,6 @@
 
 from fractions import Fraction
+from turtle import pos
 import scipy.linalg as la
 import numpy as np
 import matplotlib.pyplot as plt
@@ -354,17 +355,23 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
     rho_0 = 1.2 # Density of air
 
     # Creating Early Mesh Grids. This creates some that only need to be created once
-    distances = la.norm(field_points - positions[0,:],axis = 1)
-    FREQUENCIES, _ = np.meshgrid(frequencies,distances)
-    PHASES, _ = np.meshgrid(frequencies,distances)
-    STRENGTHS, _ = np.meshgrid(strengths,distances)
+    # We need each column of the DISTANCES grid to equal the distance to each source
+    distances = np.zeros([len(field_points),len(strengths)])
+    for i in range(len(strengths)):
+        distances[:,i] = la.norm(field_points - positions[i,:],axis = 1)
+
+    FREQUENCIES, _ = np.meshgrid(frequencies,distances[:,0])
+    PHASES, _ = np.meshgrid(frequencies,distances[:,0])
+    STRENGTHS, _ = np.meshgrid(strengths,distances[:,0])
 
     for i in range(len(strengths)):
 
         current_source_location = positions[i,:]
-        distances = la.norm(field_points - current_source_location,axis = 1)
+        #distances = la.norm(field_points - current_source_location,axis = 1)
 
         _, DISTANCES = np.meshgrid(frequencies,distances)
+
+        DISTANCES = distances
 
         omegas = 2 * np.pi * FREQUENCIES
         k = omegas/c
@@ -372,6 +379,7 @@ def monopole_field(positions,frequencies,strengths,phases,field_points,time):
 
         responses = responses + A * np.exp(-1j*k*DISTANCES)/DISTANCES * np.exp(1j * PHASES) * np.exp(1j*omegas*time)
 
+    # Each column represents the contribution to a point by a particular source. We must sum them up at each point
     responses = np.sum(responses,axis = 1)
             
     return responses
@@ -415,30 +423,27 @@ def rayleigh(positions,areas,velocities,phases,field_points,frequencies,time):
     rho_0 = 1.2 # Density of air
 
     # Creating Early Mesh Grids. This creates some that only need to be created once
-    distances = la.norm(field_points - positions[0,:],axis = 1)
-    FREQUENCIES, _ = np.meshgrid(frequencies,distances)
-    PHASES, _ = np.meshgrid(frequencies,distances)
-    VELOCITIES, _ = np.meshgrid(velocities,distances)
-    AREAS, _ = np.meshgrid(areas,distances)
+    distances = np.zeros([len(field_points),len(velocities)])
+    for i in range(len(velocities)):
+        distances[:,i] = la.norm(field_points - positions[i,:],axis = 1)
+
+    FREQUENCIES, _ = np.meshgrid(frequencies,distances[:,0])
+    PHASES, _ = np.meshgrid(frequencies,distances[:,0])
+    VELOCITIES, _ = np.meshgrid(velocities,distances[:,0])
+    AREAS, _ = np.meshgrid(areas,distances[:,0])
     
     for i in range(len(velocities)):
-
-        print("Source {}".format(i))
-
-        current_source_location = positions[i,:]
-        distances = la.norm(field_points - current_source_location,axis = 1)
-
-        _, DISTANCES = np.meshgrid(frequencies,distances)
 
         omegas = 2 * np.pi * FREQUENCIES
         k = omegas/c
 
         responses = responses + (1j * omegas * rho_0 / (2 * np.pi) * 
                                 VELOCITIES * 
-                                np.exp(-1j * k * DISTANCES)/DISTANCES * 
+                                np.exp(-1j * k * distances)/distances * 
                                 np.exp(1j*PHASES) * np.exp(1j*omegas*time) * 
                                 AREAS)
 
+    # We just need the first column. All columns are duplicates of each other. WRONG!!!!!
     responses = np.sum(responses,axis = 1)
             
     return responses
