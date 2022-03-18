@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 total_area = 0.2
-num_elements = 10
+num_elements = 100
 
 positions_circle, areas_circle = ap.get_circle_elements(total_area,num_elements)
 positions_square, areas_square = ap.get_square_elements(total_area,num_elements)
@@ -25,20 +25,17 @@ print("Total Square Area = {0:.5f} m^2, number of elements is {1}".format(sum(ar
 velocities = 0.01
 strengths = 0.000005
 
-field_points, angles = ap.define_arc(1000,180)
+field_points, angles = ap.define_arc(1000,180,dimensions = 2)
+
+field_points = np.linspace(0.1,3,1000)
 
 pressures = ap.pressure_field(positions_circle,
                             [2000],
+                            field_points = field_points,
                             areas = areas_circle,
                             velocities = velocities,
                             strengths = strengths,
-                            x_range = [0,2],
-                            y_range = [-1,1],
-                            z_range = [-1,1],
-                            pressure_limits = [-50,50],
-                            method = "Rayleigh",
-                            dimensions = 2,
-                            point_density = 100,
-                            show_plots = True)
+                            method = "Rayleigh")
 
+plt.plot(field_points,np.abs(pressures))
 plt.show()

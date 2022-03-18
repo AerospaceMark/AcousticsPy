@@ -5,3 +5,4 @@ dist/*
 .vscode/*
 *.DS_Store
 *.ipynb_checkpoints/*
+doc/Tutorials/.ipynb_checkpoints/*

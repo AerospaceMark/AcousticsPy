@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.2.10' 
+VERSION = '0.2.11' 
 DESCRIPTION = 'Lots of simple acoustics calculations, all in one place.'
 LONG_DESCRIPTION = 'This is a package that I am writing during my time as a graduate student at Brigham Young University. My research is in aeroacoustics, and most of our code is written in MATLAB. Knowing that I may not always have access to MATLAB, and because I enjoy open-source software, I\'ve decided to create code in Python that performs many of the same tasks that we regularly perform for research. My dream is that this package can develop to the point where it could realistically be used to do all of the same research that we currently perform in MATLAB.'
 

@@ -321,19 +321,19 @@ def get_field(positions,frequencies,strengths,velocities,areas,phases,field_poin
     areas = np.asarray(areas)
     field_points = np.asarray(field_points)
 
-    if len(positions[0]) == 2 and len(field_points[0]) == 1:
+    if np.size(positions[0]) == 2 and np.size(field_points[0]) == 1:
         new_points = np.zeros([len(field_points),2])
         for i in range(len(field_points)):
-            new_points[i] = np.array([field_points[i,0],0.0])
+            new_points[i] = np.array([field_points[i],0.0])
         field_points = new_points
 
-    if len(positions[0]) == 3 and len(field_points[0]) == 1:
+    if np.size(positions[0]) == 3 and np.size(field_points[0]) == 1:
         new_points = np.zeros([len(field_points),3])
         for i in range(len(field_points)):
-            new_points[i] = np.array([field_points[i,0],0.0,0.0])
+            new_points[i] = np.array([field_points[i],0.0,0.0])
         field_points = new_points
 
-    if len(positions[0]) == 3 and len(field_points[0]) == 2:
+    if np.size(positions[0]) == 3 and np.size(field_points[0]) == 2:
         new_points = np.zeros([len(field_points),3])
         for i in range(len(field_points)):
             new_points[i] = np.array([field_points[i,0],field_points[i,1],0.0])
@@ -355,7 +355,7 @@ def get_field(positions,frequencies,strengths,velocities,areas,phases,field_poin
     AREAS = np.zeros([len(field_points),len(strengths)])
     VELOCITIES = np.zeros([len(field_points),len(strengths)])
 
-    for i in range(len(strengths)):
+    for i in range(np.size(strengths)):
         DISTANCES[:,i] = la.norm(field_points - positions[i,:],axis = 1)
         FREQUENCIES[:,i] = np.ones(len(field_points)) * frequencies[i]
         PHASES[:,i] = np.ones(len(field_points)) * phases[i]
