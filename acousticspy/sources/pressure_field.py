@@ -7,6 +7,7 @@ import matplotlib.colors as colors
 Creating an entire pressure field based on the locations of various sources
 """
 def pressure_field(positions,frequencies,
+                    field_points = -1,
                     time = 0.0,
                     areas = [0.001],
                     velocities = [0.01],
@@ -44,16 +45,22 @@ def pressure_field(positions,frequencies,
     if np.size(velocities) == 1:
         velocities = np.ones(num_sources) * velocities
 
+    # Enabling the user to custom-select points in the field
+    if np.all(field_points == -1):
+        custom_points = False
+    else:
+        custom_points = True
+
     time = complex(time)
 
-    if dimensions == 1:
+    if dimensions == 1 and not custom_points:
         numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
         x = np.linspace(x_range[0],x_range[1],numPoints_x)
         x = x[x != 0]
         field_points = x.reshape(-1,1)
         grid = x
 
-    elif dimensions == 2:
+    elif dimensions == 2 and not custom_points:
         numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
         numPoints_y = int(np.floor((y_range[1] - y_range[0]) * point_density))
         x = np.linspace(x_range[0],x_range[1],numPoints_x)
@@ -64,7 +71,7 @@ def pressure_field(positions,frequencies,
         X = grid[0]
         Y = grid[1]
 
-    elif dimensions == 3:
+    elif dimensions == 3 and not custom_points:
         numPoints_x = int(np.floor((x_range[1] - x_range[0]) * point_density))
         numPoints_y = int(np.floor((y_range[1] - y_range[0]) * point_density))
         numPoints_z = int(np.floor((z_range[1] - z_range[0]) * point_density))
@@ -80,29 +87,33 @@ def pressure_field(positions,frequencies,
     
     if not directivity_only:
         pressure_field = get_field(positions,frequencies,strengths,velocities,areas,phases,field_points,time,method)
-        pressure_field = pressure_field.reshape(-1,len(x)) # It's the number of points in the x-direction that you use here
+        if not custom_points:
+            pressure_field = pressure_field.reshape(-1,len(x)) # It's the number of points in the x-direction that you use here
     else:
         pressure_field = 0
     
     # Getting the directivity at a given distance. Default is 1000 meters away
-    if not dimensions == 1:
+    if not dimensions == 1 and not custom_points:
         directivity_points, theta = define_arc(directivity_distance,num_directivity_points)
         directivity = np.abs(get_field(positions,frequencies,strengths,velocities,areas,phases,directivity_points,time,method))
         directivity = directivity / np.max(directivity)
     
     # Only show plots if you calculated the entirie pressure field
-    if dimensions == 1:
+    if dimensions == 1 and not custom_points:
         plot_1D(x,pressure_field,positions,show_plots,pressure_limits,directivity_only)
         theta = 0
         directivity = 0
 
-    if dimensions == 2:
+    if dimensions == 2 and not custom_points:
         plot_2D(X,Y,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,pressure_limits)
 
-    if dimensions == 3:
+    if dimensions == 3 and not custom_points:
         plot_3D(X,Y,Z,pressure_field,positions,method,theta,directivity,show_plots,directivity_only,directivity_distance,directivity_plot_alone,pressure_limits)
         
-    return pressure_field, grid, directivity, theta
+    if not custom_points:    
+        return pressure_field, grid, directivity, theta
+    else:
+        return pressure_field
 
 def plot_1D(x,pressure_field,positions,show_plots,pressure_limits,directivity_only):
 
@@ -375,12 +386,12 @@ def get_field(positions,frequencies,strengths,velocities,areas,phases,field_poin
 """
 Define an arc for whatever reasons you may want to do so
 """
-def define_arc(radius,numPoints,theta_lims = (0,360)):
+def define_arc(radius,numPoints,theta_lims = (0,360), dimensions = 2):
     theta_min = theta_lims[0] * np.pi/180
     theta_max = theta_lims[1] * np.pi/180
     theta = np.linspace(theta_min,theta_max,numPoints)
     
-    points = np.empty([0,2])
+    points = np.empty([0,dimensions])
     
     for i in range(0,numPoints):
         points = np.append(points,radius * np.array([[np.cos(theta[i]), np.sin(theta[i])]]),axis = 0)
